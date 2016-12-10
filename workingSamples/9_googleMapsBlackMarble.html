@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+<meta property="og:image" content="http://blue-marble.de/night/nightLightsTeaser.jpg" />
+<meta property="og:site_name" content="Blue Marble Navigator - Night Lights 2012">
+<meta property="og:description" content="Zoomable image of Earth at night, with optional Google Maps layer.">
+<title>Blue Marble Navigator - Night Lights 2012</title>
+<style type="text/css">
+html, body, #map_canvas {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	font-family: sans-serif;
+}
+#search_panel {
+	position: absolute;
+	top: 5px;
+	right: 12em;
+	z-index: 5;
+}
+#target {
+	width: 14em;
+	font-size: 80%;
+	background-color:rgba(255,255,255,0.8);
+}
+#photo-panel {
+	background: #fff;
+	padding: 5px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	width: 300px;
+	max-height: 300px;
+	font-size: 14px;
+	border: 1px solid #ccc;
+	box-shadow: -2px 2px 2px rgba(33, 33, 33, 0.4);
+	display: none;
+}
+#toggle_panel {
+	position: absolute;
+	font-size: 80%;
+	color: white;
+	right: 0em;
+	top: 2em;
+	z-index: 5;
+}
+#custom_attribution {
+	position: absolute;
+	font-size: 70%;
+	color: #ccc;
+	bottom: 0.1em;
+	left: 80px;
+	z-index: 5;
+}
+</style>
+
+<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key=AIzaSyDojIjJQccLBvbnH-yC8ANk5dUrrb6vWp0&amp;libraries=places,panoramio&amp;sensor=false"></script>
+<script type="text/javascript">
+
+function padTileCoordinate(number, zoomlevel) {
+	switch(Math.floor(Math.log(Math.pow(2,zoomlevel))/Math.log(10)) - Math.floor(Math.log(number)/Math.log(10))) {
+		case 3:	return '000' + number;
+		case 2: return '00' + number;
+		case 1: return '0' + number;
+		default: return number;
+	}
+}
+function getParam(name) {
+	name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+	var regexS = "[\\?&]" + name + "=([^&#]*)";
+	var regex = new RegExp(regexS);
+	var results = regex.exec(window.location.href);
+	if (results == null)
+		return "";
+	else
+		return results[1];
+}
+function getNormalizedCoord(tile, zoom) {
+	var tileRange = 1 << zoom;
+	if(tile.y < 0 || tile.y >= tileRange)
+		return null;
+	return { x: (tile.x % tileRange + tileRange) % tileRange, y: tile.y };
+}
+var lastLabelChoice = true;
+var map;
+// var panoramioLayer = new google.maps.panoramio.PanoramioLayer();
+var placeNames = new google.maps.ImageMapType({
+	getTileUrl: function(tile, zoom) {
+		tile = getNormalizedCoord(tile, zoom);
+		if(!tile)
+			return null;
+		return "http://mt0.google.com/vt/v=apt.116&hl=en&x=" + tile.x + "&y=" + tile.y + "&z=" + zoom + "&s=G&lyrs=h";
+	},
+	tileSize: new google.maps.Size(256, 256),
+	isPng: false,
+	maxZoom: 20,
+	name: "Transparent labels"
+});
+function togglePanoramio() {
+	document.getElementById("panoramio_toggle").checked ? panoramioLayer.setMap(map) : panoramioLayer.setMap(null);
+}
+function toggleLabels(deliberate) {
+	document.getElementById("labels_toggle").checked ? map.overlayMapTypes.push(placeNames) : map.overlayMapTypes.clear();
+	if(deliberate)
+		lastLabelChoice = document.getElementById("labels_toggle").checked;
+}
+
+function initialize() {
+	var maxZoom = 10;
+	var paramLL = getParam('ll');
+	var latlon = paramLL.split(',');
+	var zoomLevel = 4;
+	var setMarker = false;
+	if(paramLL=='' || isNaN(latlon[0]) || isNaN(latlon[1])) {
+		var lat = 39;
+		var lon = -98;
+	} else {
+		var lat = latlon[0];
+		var lon = latlon[1];
+		zoomLevel = 7;
+		setMarker = true;
+	}
+	var nightMapType = new google.maps.ImageMapType({
+		getTileUrl: function(tile, zoom) {
+			tile = getNormalizedCoord(tile, zoom);
+			if(!tile)
+				return null;
+			var resolution = String('000000'+256*Math.pow(2,zoom)).slice(-6);
+			var yCoo = padTileCoordinate(tile.y,zoom);
+			var xCoo = padTileCoordinate(tile.x,zoom);
+			var subDir = resolution + (zoom==10 ? '/' + yCoo.toString().substring(0,2) : '');
+			return 'http://blue-marble.de/google/tiles_n2012/' + subDir + '/' + resolution + '_' + yCoo + '_' + xCoo + '.jpg'
+		},
+		tileSize: new google.maps.Size(256, 256),
+		maxZoom: maxZoom,
+		name: "Night"
+	});
+	map = new google.maps.Map(document.getElementById('map_canvas'), {
+		backgroundColor:'#00011d',
+		center: new google.maps.LatLng(lat, lon),
+		zoom: zoomLevel,
+		mapTypeControlOptions: { mapTypeIds: [google.maps.MapTypeId.TERRAIN,google.maps.MapTypeId.SATELLITE,"night",] },
+		mapTypeControl: true,
+		scaleControl: true,
+		streetViewControl: false,
+		overviewMapControl: true,
+		overviewMapControlOptions: { opened: true }
+	});
+	map.mapTypes.set('night', nightMapType);
+	map.setMapTypeId('night');
+	map.overlayMapTypes.insertAt(0, placeNames);
+
+// Initial Marker
+	if(setMarker)
+		var marker = new google.maps.Marker({
+			position: new google.maps.LatLng(lat, lon),
+			map: map
+		});
+
+// Search
+	var input = document.getElementById('target');
+	var searchBox = new google.maps.places.SearchBox(input);
+	var markers = [];
+	google.maps.event.addListener(searchBox, 'places_changed', function() {
+		var places = searchBox.getPlaces();
+		for(var i = 0, marker; marker = markers[i]; i++) {
+			marker.setMap(null);
+		}
+		markers = [];
+		var bounds = new google.maps.LatLngBounds();
+		for(var i = 0, place; place = places[i]; i++) {
+			var marker = new google.maps.Marker({
+				map: map,
+				title: place.name,
+				position: place.geometry.location
+			});
+			markers.push(marker);
+			bounds.extend(place.geometry.location);
+		}
+		map.fitBounds(bounds);
+	});
+	google.maps.event.addListener(map, 'bounds_changed', function() {
+		var bounds = map.getBounds();
+		searchBox.setBounds(bounds);
+	});
+
+// Rest
+	panoramioLayer.setTag('night');
+	google.maps.event.addListener(map, 'maptypeid_changed', function() {
+		switch(map.getMapTypeId()) {
+			case google.maps.MapTypeId.TERRAIN:
+				document.getElementById("custom_attribution").style.display = "none";
+				document.getElementById("labels_toggle").checked = false;
+				panoramioLayer.setTag(null);
+				toggleLabels();
+				break;
+			case google.maps.MapTypeId.SATELLITE:
+				document.getElementById("custom_attribution").style.display = "";
+				panoramioLayer.setTag('day');
+				if(document.getElementById("labels_toggle").checked != lastLabelChoice) {
+					document.getElementById("labels_toggle").checked = !document.getElementById("labels_toggle").checked;
+					toggleLabels();
+				}
+				break;
+			case "night":
+				document.getElementById("custom_attribution").style.display = "";//visibility="visible";
+				panoramioLayer.setTag('night');
+				if(document.getElementById("labels_toggle").checked != lastLabelChoice) {
+					document.getElementById("labels_toggle").checked = !document.getElementById("labels_toggle").checked;
+					toggleLabels();
+				}
+				break;
+		}
+	});
+// :: END initialize()
+}
+google.maps.event.addDomListener(window, 'load', initialize);
+</script>
+</head>
+
+<body>
+<form id="toggle_panel">
+	<input type="checkbox" id="labels_toggle" onclick="toggleLabels(true)" checked> Labels<br />
+<!--	<input type="checkbox" id="panoramio_toggle" onclick="togglePanoramio()" > Photos<br />-->
+</form>
+<div id="search_panel"><input id="target" type="text" placeholder="Search"></div>
+<div id="custom_attribution">Night-lights imagery by NASA's Earth Observatory</div>
+<div id="map_canvas"></div>
+
+<!-- <script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script> -->
+<!-- <script type="text/javascript">
+var pageTracker = _gat._getTracker("UA-1017277-3");
+pageTracker._trackPageview();
+</script> -->
+</body>
+</html>
