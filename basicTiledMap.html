@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Tiled map service</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/3.18/esri/css/esri.css">
+    <style>
+      html, body, #map {
+        height: 100%; width: 100%; margin: 0; padding: 0;
+      }
+    </style>
+
+    <script src="https://js.arcgis.com/3.18/"></script>
+    <script>
+      var map;
+
+      require([
+        "esri/map",
+        "esri/layers/ArcGISTiledMapServiceLayer",
+        "esri/layers/FeatureLayer",
+        "dojo/domReady!"
+      ],
+        function(Map, ArcGISTiledMapServiceLayer, FeatureLayer) {
+          map = new Map("map", {
+           basemap: "dark-gray"
+         });
+
+          var tiled = new ArcGISTiledMapServiceLayer("https://tiles.arcgis.com/tiles/b3fMqPOmotX6SV4k/arcgis/rest/services/ArtificialSkyBrightness/MapServer/");
+          map.addLayer(tiled);
+
+          var featureLayer = new FeatureLayer("https://services.arcgisonline.com/arcgis/rest/services/Reference/World_Boundaries_and_Places/MapServer/");
+          map.addLayer(featureLayer);
+        }
+      );
+    </script>
+  </head>
+  <body>
+    <div id="map"></div>
+  </body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Tiled map service</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/3.18/esri/css/esri.css">
+    <style>
+      html, body, #map {
+        height: 100%; width: 100%; margin: 0; padding: 0;
+      }
+    </style>
+
+    <script src="https://js.arcgis.com/3.18/"></script>
+    <script>
+      var map;
+
+      require(["esri/map", "esri/layers/ArcGISTiledMapServiceLayer", "dojo/domReady!"],
+        function(Map, ArcGISTiledMapServiceLayer) {
+          var map = new Map("map", {
+              basemap: "dark-gray",
+              center: [long, lat], // long, lat
+              zoom: 4
+          });
+
+          var tiled = new ArcGISTiledMapServiceLayer("https://tiles.arcgis.com/tiles/b3fMqPOmotX6SV4k/arcgis/rest/services/ArtificialSkyBrightness/MapServer/0/");
+          map.addLayer(tiled);
+        }
+      );
+    </script>
+  </head>
+  <body>
+    <div id="map"></div>
+  </body>
+</html>

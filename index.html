@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Load Leaflet from CDN-->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet-src.js"></script>
+
+    <!-- Load Leaflet from CDN-->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet-src.js"></script>
+
+    <!-- Load Esri Leaflet from CDN -->
+    <script src="https://unpkg.com/esri-leaflet@2.0.4"></script>
+
+    <!-- Esri Leaflet Geocoder -->
+    <link rel="stylesheet" href="https://unpkg.com/esri-leaflet-geocoder@2.2.1/dist/esri-leaflet-geocoder.css">
+    <script src="https://unpkg.com/esri-leaflet-geocoder@2.2.1"></script>
+
+    <style>
+        html,
+        body,
+        #map {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <title>Light Pollution Map</title>
+</head>
+
+<body>
+
+    <div id="map"></div>
+
+    <script>
+        var map = L.map('map').setView([45.528, -102.680], 4);
+        L.esri.basemapLayer("DarkGray").addTo(map);
+
+        map.createPane('brightness');
+
+        L.esri.tiledMapLayer({
+            url: 'https://tiles.arcgis.com/tiles/b3fMqPOmotX6SV4k/arcgis/rest/services/ArtificialSkyBrightness/MapServer',
+            maxNativeZoom: 18,
+            pane: 'brightness',
+        }).addTo(map);
+
+        map.createPane('locations');
+
+        L.esri.tiledMapLayer({
+            url: 'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer',
+            pane: 'locations',
+        }).addTo(map);
+
+        // create the geocoding control and add it to the map
+        var searchControl = L.esri.Geocoding.geosearch().addTo(map);
+
+        // create an empty layer group to store the results and add it to the map
+        var results = L.layerGroup().addTo(map);
+
+        // listen for the results event and add every result to the map
+        searchControl.on("results", function(data) {
+            results.clearLayers();
+            for (var i = data.results.length - 1; i >= 0; i--) {
+                results.addLayer(L.marker(data.results[i].latlng));
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+
+    <title>FeatureLayer</title>
+
+    <!-- ArcGIS Stylesheet -->
+    <link rel="stylesheet" href="https://js.arcgis.com/3.18/esri/css/esri.css">
+
+    <!--  ArcGIS API  -->
+    <script src="https://js.arcgis.com/3.18/"></script>
+
+    <!-- Styles map to take up whole page -->
+    <style>
+        html,
+        body,
+        #map {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+
+    <script>
+    // for (var i = 0; i < response.length; i++) {
+        // var obj = {
+        //     lat: -40,
+        //     long: 40,
+        // };
+        // mapArr.push(obj);
+
+    require([
+                "esri/Color",
+                "esri/geometry/Point",
+                "esri/geometry/webMercatorUtils",
+                "esri/graphic",
+                "esri/layers/FeatureLayer",
+                "esri/layers/ArcGISTiledMapServiceLayer",
+                "esri/map",
+                "esri/InfoTemplate",
+                "esri/renderers/SimpleRenderer",
+                "esri/renderers/TemporalRenderer",
+                "esri/renderers/TimeClassBreaksAger",
+                "esri/symbols/SimpleLineSymbol",
+                "esri/symbols/SimpleMarkerSymbol",
+                "esri/symbols/PictureMarkerSymbol",
+                "esri/TimeExtent",
+                "dojo/domReady!"
+            ], function(Color, Point, webMercatorUtils, Graphic, FeatureLayer, ArcGISTiledMapServiceLayer, Map, InfoTemplate, SimpleRenderer, TemporalRenderer,
+                TimeClassBreaksAger, SimpleLineSymbol, SimpleMarkerSymbol, PictureMarkerSymbol, TimeExtent) {
+
+                // can be used to center map later
+                var long = -98;
+                var lat = 39;
+
+                //creates a dark gray basemap centered with U.S. in view
+                var map = new Map("map", {
+                    // basemap: "dark-gray",
+                    center: [long, lat], // long, lat
+                    zoom: 4
+                });
+
+
+                /****************************************************************
+                 * Add feature layer - A FeatureLayer at minimum should point
+                 * to a URL to a feature service or point to a feature collection
+                 * object.
+                 ***************************************************************/
+               var grayBase = new ArcGISTiledMapServiceLayer("https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Dark_Gray_Base/MapServer/");
+               map.addLayer(grayBase);
+
+                var tiled2 = new ArcGISTiledMapServiceLayer("https://tiles.arcgis.com/tiles/b3fMqPOmotX6SV4k/arcgis/rest/services/ArtificialSkyBrightness/MapServer/");
+                map.addLayer(tiled2);
+
+                var tiled1 = new ArcGISTiledMapServiceLayer("https://services.arcgisonline.com/arcgis/rest/services/Reference/World_Boundaries_and_Places/MapServer/");
+                map.addLayer(tiled1);
+
+            });
+
+
+
+    </script>
+</head>
+
+<body>
+    <div id="map"></div>
+</body>
+
+</html>
